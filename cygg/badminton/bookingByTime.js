@@ -22,7 +22,7 @@ function encrypt(data) {
         iv: iv,
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7,
-      }
+      },
     );
     return encryptedData.ciphertext.toString().toUpperCase();
   } catch (error) {
@@ -88,12 +88,12 @@ async function getBookingInfo(date) {
   } catch (error) {
     if (error.response) {
       console.error(
-        `🔴 服务器响应错误: ${error.response.status} ${error.response.statusText}`
+        `🔴 服务器响应错误: ${error.response.status} ${error.response.statusText}`,
       );
       if (error.response.data) {
         console.error(
           `详细信息:`,
-          JSON.stringify(error.response.data, null, 2)
+          JSON.stringify(error.response.data, null, 2),
         );
       }
     } else if (error.request) {
@@ -231,7 +231,7 @@ function displayBookingTable(bookingData) {
       console.log(
         `${index + 1}. ${slot.court.replace("南区羽毛球馆", "")} [${
           slot.time
-        }] 坐标:${slot.coordinateStr} ID:${slot.courtId}`
+        }] 坐标:${slot.coordinateStr} ID:${slot.courtId}`,
       );
     });
 

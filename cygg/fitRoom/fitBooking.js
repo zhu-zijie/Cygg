@@ -1,8 +1,26 @@
 /**
- * 健身房预约系统
+ * 健身房预约系统 - 青龙环境适配
+ * 说明:九点过后预约，建议九点半
+ * 环境变量: FIT_TOKEN, FIT_RESERVE_TIME
  */
 const CryptoJS = require("crypto-js");
 const axios = require("axios");
+
+// 环境变量
+const token = process.env.FIT_TOKEN || "";
+const reserveTimeList = process.env.FIT_RESERVE_TIME || '["19:30-20:30"]';
+
+/**
+ * 获取明天的日期，格式：YYYY-MM-DD
+ */
+function getTomorrowDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 /**
  * AES加密函数
@@ -23,27 +41,32 @@ function encrypt(data) {
       iv: iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7,
-    }
+    },
   );
   return encryptedData.ciphertext.toString().toUpperCase();
 }
 
 // 预约参数配置
 const requestParams = {
-  nodeid: "814927453893173248", // 1号健身房ID
-  reserveTime: ["16:30-17:30"], // 预约时间段
-  reserveDate: "2025-06-14", // 预约日期
+  nodeid: "814927453893173248", // 固定为1号健身房ID
+  reserveTime: reserveTimeList, // 预约时间段
+  reserveDate: getTomorrowDate(), // 预约日期
   accompanyPerson: [], // 陪同人员
   reservationPerson: "", // 预约人ID
-  payprice: "0", // 支付价格，免费时0，付费时500
-  // txamt:"500",  // 付费时参数
-  // booktype:"1", // 付费时参数
+  payprice: "0", // 支付价格
 };
 
 /**
  * 发送API请求预约健身房
  */
 async function sendRequest() {
+  // 检查Token是否存在
+  if (!token) {
+    console.error("❌ 错误：缺少FIT_TOKEN环境变量");
+    console.error("请在青龙环境中配置环境变量: FIT_TOKEN=你的token值");
+    throw new Error("缺少必要的认证Token");
+  }
+
   console.log("开始预约健身房...");
 
   const url =
@@ -56,7 +79,7 @@ async function sendRequest() {
     "Connection": "keep-alive",
     "Content-Type": "application/json",
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "token": "",
+    "token": token,
     "Accept": "*/*",
     "Origin": "https://cgyy.xju.edu.cn",
     "Referer": "https://cgyy.xju.edu.cn/",
@@ -75,13 +98,11 @@ async function sendRequest() {
       时间段: requestParams.reserveTime.join(", "),
     });
 
-    // 使用axios发送POST请求
     const response = await axios.post(url, requestBody, {
       headers: headers,
       timeout: 10000, // 设置超时时间为10秒
     });
 
-    // axios自动解析JSON响应
     console.log("响应状态:", response.status);
 
     // 处理预约结果
@@ -95,14 +116,11 @@ async function sendRequest() {
     return response.data;
   } catch (error) {
     if (error.response) {
-      // 服务器响应了，但状态码超出了2xx范围
       console.error("服务器错误:", error.response.status);
       console.error("错误详情:", error.response.data);
     } else if (error.request) {
-      // 请求已发送但没有收到响应
       console.error("请求超时或网络错误");
     } else {
-      // 请求设置出错
       console.error("请求配置错误:", error.message);
     }
     throw error;
