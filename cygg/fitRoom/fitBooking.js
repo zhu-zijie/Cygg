@@ -6,10 +6,33 @@
 const CryptoJS = require("crypto-js");
 const axios = require("axios");
 
+let notify = null;
+try {
+  notify = require("../../sendNotify.js"); // 上上级目录
+} catch (e) {
+  try {
+    notify = require("../sendNotify.js"); // 上一级目录
+  } catch (e) {
+    console.log("⚠️ 未找到 sendNotify.js 模块，将不发送通知");
+  }
+}
+
 // 环境变量
-const token = process.env.FIT_TOKEN || "";
-const reserveTimeList = process.env.FIT_RESERVE_TIME || ["19:30-20:30"];
 const id = process.env.FIT_ID || "";
+const token = process.env.FIT_TOKEN || "";
+let envReserveTime = process.env.FIT_RESERVE_TIME || ["19:30-20:30"];
+if (typeof envReserveTime === "string") {
+  try {
+    // 按照 JSON 数组解析
+    envReserveTime = JSON.parse(envReserveTime);
+  } catch (e) {
+    // 否则直接作为单项数组
+    envReserveTime = [envReserveTime];
+  }
+}
+const reserveTime = Array.isArray(envReserveTime)
+  ? envReserveTime
+  : [envReserveTime];
 
 /**
  * 获取明天的日期，格式：YYYY-MM-DD
@@ -50,7 +73,7 @@ function encrypt(data) {
 // 预约参数配置
 const requestParams = {
   nodeid: "814927453893173248", // 固定为1号健身房ID
-  reserveTime: reserveTimeList, // 预约时间段
+  reserveTime: reserveTime, // 预约时间段
   reserveDate: getTomorrowDate(), // 预约日期
   accompanyPerson: [], // 陪同人员
   reservationPerson: id, // 预约人ID
@@ -110,6 +133,24 @@ async function sendRequest() {
     if (response.data.success) {
       console.log("\n✅ 预约成功!");
       console.log("预约详情:", response.data.resultData);
+
+      // 发送通知
+      try {
+        const time = requestParams.reserveTime[0];
+        const title = "健身房预约成功";
+        const content = `日期: ${requestParams.reserveDate}\n时间: ${time}`;
+
+        console.log("📢 正在发送通知...");
+        await new Promise((resolve) => setImmediate(resolve));
+        if (notify && typeof notify.sendNotify === "function") {
+          await notify.sendNotify(title, content);
+          console.log("✅ 通知发送成功");
+        } else {
+          console.log("通知模块未导出 sendNotify 方法，跳过通知");
+        }
+      } catch (notifyErr) {
+        console.warn("⚠️ 通知发送失败:", notifyErr.message);
+      }
     } else {
       console.error("\n❌ 预约失败:", response.data.message);
     }
