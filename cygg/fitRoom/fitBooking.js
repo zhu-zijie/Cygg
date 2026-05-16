@@ -1,7 +1,7 @@
 /**
  * 健身房预约系统 - 青龙环境适配
  * 说明:九点过后预约，建议九点半
- * 环境变量: FIT_TOKEN, FIT_RESERVE_TIME
+ * 环境变量: FIT_TOKEN, FIT_RESERVE_TIME(预约时间段一小时), FIT_ID(预约人学号)
  */
 const CryptoJS = require("crypto-js");
 const axios = require("axios");
@@ -9,6 +9,7 @@ const axios = require("axios");
 // 环境变量
 const token = process.env.FIT_TOKEN || "";
 const reserveTimeList = process.env.FIT_RESERVE_TIME || ["19:30-20:30"];
+const id = process.env.FIT_ID || "";
 
 /**
  * 获取明天的日期，格式：YYYY-MM-DD
@@ -52,7 +53,7 @@ const requestParams = {
   reserveTime: reserveTimeList, // 预约时间段
   reserveDate: getTomorrowDate(), // 预约日期
   accompanyPerson: [], // 陪同人员
-  reservationPerson: "", // 预约人ID
+  reservationPerson: id, // 预约人ID
   payprice: "0", // 支付价格
 };
 
