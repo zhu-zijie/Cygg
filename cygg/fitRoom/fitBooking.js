@@ -8,7 +8,7 @@ const axios = require("axios");
 
 // 环境变量
 const token = process.env.FIT_TOKEN || "";
-const reserveTimeList = process.env.FIT_RESERVE_TIME || '["19:30-20:30"]';
+const reserveTimeList = process.env.FIT_RESERVE_TIME || ["19:30-20:30"];
 
 /**
  * 获取明天的日期，格式：YYYY-MM-DD
